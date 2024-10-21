@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"log"
 	"net"
 
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	desc "chat_server/pkg/chat_server_v1"
+
 	"github.com/brianvoe/gofakeit"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -19,17 +21,17 @@ type server struct {
 	desc.UnimplementedChatServerV1Server
 }
 
-func (s *server) Create(ctx context.Context, in *desc.CreateRequest) (*desc.CreateResponse, error) {
+func (s *server) Create(_ context.Context, in *desc.CreateRequest) (*desc.CreateResponse, error) {
 	log.Printf("Received CreateRequest: %s", in.GetName())
 	return &desc.CreateResponse{Id: gofakeit.Int64()}, nil
 }
 
-func (s *server) Delete(ctx context.Context, in *desc.DeleteRequest) (*emptypb.Empty, error) {
+func (s *server) Delete(_ context.Context, in *desc.DeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("Received DeleteRequest: %d", in.GetId())
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) SendMessage(ctx context.Context, in *desc.SendMessageRequest) (*emptypb.Empty, error) {
+func (s *server) SendMessage(_ context.Context, in *desc.SendMessageRequest) (*emptypb.Empty, error) {
 	log.Printf("Received SendMessageRequest: %v", in)
 	return &emptypb.Empty{}, nil
 }
