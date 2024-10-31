@@ -25,3 +25,14 @@ generate-auth-api:
 	--go-grpc_out=pkg/chat_server_v1 --go-grpc_opt=paths=source_relative \
 	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
 	api/chat_server_v1/chat_server.proto
+
+build:
+	GOOS=linux GOARCH=amd64 go build -o service_linux cmd/grpc_server/main.go
+
+docker-build-and-push:
+	docker buildx build --no-cache --platform linux/amd64 -t cr.yandex/crpsrspk8oudvqj1v4vf/test-server:v0.0.1 .
+	echo y0_AgAAAABWYGVmAATuwQAAAAEWpuwKAABHA6s9jV1P_YeJFFTNiqo_BTOREQ | docker login \
+      --username oauth \
+      --password-stdin \
+     cr.yandex
+	docker push cr.yandex/crpsrspk8oudvqj1v4vf/test-server:v0.0.1

@@ -1,6 +1,6 @@
 module chat_server
 
-go 1.22
+go 1.23
 
 require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
