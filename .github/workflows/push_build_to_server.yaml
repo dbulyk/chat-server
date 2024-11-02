@@ -25,10 +25,7 @@ jobs:
       - name: Login to Docker Registry
 
         run: |
-          echo ${{ secrets.REGISTRY_TOKEN }} | docker login 
-          --username oauth 
-          --password-stdin 
-          cr.yandex
+          echo ${{ secrets.REGISTRY_TOKEN }} | docker login --username oauth --password-stdin cr.yandex
 #         docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} $REGISTRY
 
       - name: Build and Push Docker Image
