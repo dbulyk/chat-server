@@ -7,7 +7,7 @@ on:
     branches: [ main, master ]
 
 env:
-  REGISTRY: "cr.yandex"
+  REGISTRY: "cr.yandex/crpsrspk8oudvqj1v4vf"
   IMAGE_NAME: "chat-server"
   CONTAINER_NAME: "chat-server-container"
 
