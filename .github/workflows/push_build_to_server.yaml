@@ -104,8 +104,8 @@ jobs:
             sudo docker run -d -p 50051:50051 --name $CONTAINER_NAME -t $REGISTRY/$IMAGE_NAME:$TAG_NAME
             
             # Запускаем мигратор
-            docker stop auth_migrator || echo "Контейнер chat_server_migrator не запущен"
-            docker rm auth_migrator || echo "Контейнер chat_server_migrator не существует"
+            docker stop chat_server_migrator || echo "Контейнер chat_server_migrator не запущен"
+            docker rm chat_server_migrator || echo "Контейнер chat_server_migrator не существует"
             docker run --name chat_server_migrator \
             --env-file .env \
             -e DB_HOST=$DB_CONTAINER_NAME -t $REGISTRY/chat_server_migrator:$TAG_NAME || \
