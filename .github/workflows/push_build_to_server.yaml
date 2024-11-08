@@ -54,14 +54,12 @@ jobs:
 
       - name: Create .env file for CI
         run: |
-          echo "PG_DATABASE_NAME=chat_server" >> .env
-          echo "PG_USER=${{ secrets.PG_USER }}" >> .env
-          echo "PG_PASSWORD=${{ secrets.PG_PASSWORD }}" >> .env
-          echo "PG_PORT=5432" >> .env
-          echo "MIGRATION_DIR=./migrations" >> .env
-          echo "GRPC_HOST=0.0.0.0" >> .env
-          echo "GRPC_PORT=50052" >> .env
-          echo "PG_DSN=host=$DB_CONTAINER_NAME port=5432 dbname=auth user=${{secrets.PG_USER}} password=${{secrets.PG_PASSWORD}} sslmod
+          echo "PG_DATABASE_NAME=chat_server" >> .env \
+          echo "PG_USER=${{ secrets.PG_USER }}" >> .env \
+          echo "PG_PASSWORD=${{ secrets.PG_PASSWORD }}" >> .env \
+          echo "PG_PORT=5432" >> .env \
+          echo "MIGRATION_DIR=./migrations" >> .env \
+          echo "PG_DSN=host=$DB_CONTAINER_NAME port=5432 dbname=chat user=${{secrets.PG_USER}} password=${{secrets.PG_PASSWORD}} sslmod
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
