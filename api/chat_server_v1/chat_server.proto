@@ -8,20 +8,26 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/dbulyk/chat_server/pkg/chat_server_v1;chat_server_v1";
 
 service ChatServerV1 {
-  rpc Create(CreateRequest) returns (CreateResponse);
-  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+  rpc CreateChat(CreateChatRequest) returns (CreateChatResponse);
+  rpc AddUserToChat(AddUserToChatRequest) returns (google.protobuf.Empty);
+  rpc DeleteChat(DeleteChatRequest) returns (google.protobuf.Empty);
   rpc SendMessage(SendMessageRequest) returns (google.protobuf.Empty);
 }
 
-message CreateRequest {
-  string name = 1;
+message CreateChatRequest {
+  repeated int64 userIds = 1; // id пользователей
+  string title = 2; // название чата
 }
 
-message CreateResponse {
+message AddUserToChatRequest {
+  repeated int64 userIds = 1;
+}
+
+message CreateChatResponse {
   int64 id = 1;
 }
 
-message DeleteRequest {
+message DeleteChatRequest {
   int64 id = 1;
 }
 

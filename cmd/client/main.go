@@ -19,6 +19,7 @@ const (
 	address = "localhost:50051"
 )
 
+// main создает соединение с сервером
 func main() {
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -36,12 +37,13 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	r, err := c.Create(ctx, &desc.CreateRequest{
-		Name: gofakeit.Name(),
+	r, err := c.CreateChat(ctx, &desc.CreateChatRequest{
+		UserIds: []int64{1, 2},
+		Title:   gofakeit.Name(),
 	})
 	if err != nil {
-		log.Panicf("failed to get note by id: %v", err)
+		log.Panicf("failed to create chat by id: %v", err)
 	}
 
-	log.Printf(color.RedString("Note id:\n"), color.GreenString("%+v", r.GetId()))
+	log.Printf(color.RedString("Chat id:\n"), color.GreenString("%+v", r.GetId()))
 }

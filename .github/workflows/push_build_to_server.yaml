@@ -10,20 +10,63 @@ env:
   REGISTRY: "cr.yandex/crpsrspk8oudvqj1v4vf"
   IMAGE_NAME: "chat-server"
   CONTAINER_NAME: "chat-server-container"
+  DB_CONTAINER_NAME: "db-chat-server-container"
+  DB_IMAGE_NAME: "postgres:17"
 
 jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: go.sum
+
+      - name: Build
+        run: go build -o ./bin/ -v ./...
+
+      - name: Test
+        run: go test -v ./...
+  linter:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: false
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.61
+          args: --timeout=30m --config=.github/workflows/linter_config.yaml
   image-build-and-push:
     runs-on: ubuntu-latest
+    needs: [build-and-test, linter]
 
     steps:
       - name: Checkout master
         uses: actions/checkout@v3
 
+      - name: Create .env file for CI
+        run: |
+          echo "PG_DATABASE_NAME=chat_server" >> .env
+          echo "PG_USER=${{ secrets.PG_USER }}" >> .env
+          echo "PG_PASSWORD=${{ secrets.PG_PASSWORD }}" >> .env
+          echo "PG_PORT=5432" >> .env
+          echo "MIGRATION_DIR=./migrations" >> .env
+          echo "GRPC_HOST=0.0.0.0" >> .env
+          echo "GRPC_PORT=50052" >> .env
+          echo "PG_DSN=host=$DB_CONTAINER_NAME port=5432 dbname=auth user=${{secrets.PG_USER}} password=${{secrets.PG_PASSWORD}} sslmod
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Login to Docker Registry
-
         run: |
           echo ${{ secrets.REGISTRY_TOKEN }} | docker login --username oauth --password-stdin $REGISTRY
 
@@ -32,6 +75,12 @@ jobs:
           TAG_NAME=$(echo $GITHUB_SHA | head -c7)
           docker buildx create --use
           docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_NAME:$TAG_NAME -f Dockerfile .
+
+      - name: Build and Push Migrator Image
+        run: |
+          TAG_NAME=$(echo $GITHUB_SHA | head -c7)
+          docker buildx build --no-cache --push --tag $REGISTRY/chat_server_migrator:$TAG_NAME -f migration.Dockerfile .
+
   deploy-image:
     runs-on: ubuntu-latest
     needs: image-build-and-push
@@ -45,17 +94,24 @@ jobs:
           key: ${{ secrets.SSHKEY }}
           envs: IMAGE_NAME,REGISTRY,GITHUB_SHA,CONTAINER_NAME
           script: |
-            # Set up variables
+            # Устанавливаем значения переменных
             TAG_NAME=$(echo $GITHUB_SHA | head -c7)
 
-            # Login into Yandex Cloud Registry
+            # Логинимся в яндекс облако
             echo ${{ secrets.REGISTRY_TOKEN }} | sudo docker login --username oauth --password-stdin $REGISTRY
 
-            # Stop running container
+            # запускаем контейнет
             sudo docker stop $CONTAINER_NAME
-
-            # Remove old container
             sudo docker rm $CONTAINER_NAME
-
-            # Run a new container from a new image
             sudo docker run -d -p 50051:50051 --name $CONTAINER_NAME -t $REGISTRY/$IMAGE_NAME:$TAG_NAME
+            
+            # Запускаем мигратор
+            docker stop auth_migrator || echo "Контейнер chat_server_migrator не запущен"
+            docker rm auth_migrator || echo "Контейнер chat_server_migrator не существует"
+            docker run --name chat_server_migrator \
+            --env-file .env \
+            -e DB_HOST=$DB_CONTAINER_NAME -t $REGISTRY/chat_server_migrator:$TAG_NAME || \
+            echo "Ошибка запуска контейнера миграций"
+            
+            # удаляем образы старше 1 дня
+            docker image prune -a --filter "until=24h" -f
