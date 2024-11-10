@@ -1,0 +1,149 @@
+package main
+
+import (
+	desc "chat_server/pkg/chat_server_v1"
+	"context"
+	"fmt"
+	"github.com/jackc/pgx/v5"
+	"log"
+	"net"
+	"time"
+
+	sq "github.com/Masterminds/squirrel"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/types/known/emptypb"
+)
+
+const (
+	grpcPort = 50051
+	dbDSN    = "host=localhost port=5432 dbname=postgres user=admin password=admin sslmode=disable"
+)
+
+type server struct {
+	desc.UnimplementedChatServerV1Server
+	db *pgx.Conn
+}
+
+// main запускает сервер на указанном порту
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	pool, err := pgx.Connect(ctx, dbDSN)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+	defer pool.Close(ctx)
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	s := grpc.NewServer()
+	reflection.Register(s)
+	desc.RegisterChatServerV1Server(s, &server{db: pool})
+
+	log.Printf("server listening at %v", lis.Addr())
+
+	if err = s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
+
+// CreateChat Создаёт новый чат с указанными пользователями и названием
+func (s *server) CreateChat(ctx context.Context, in *desc.CreateChatRequest) (*desc.CreateChatResponse, error) {
+	builder := sq.Insert("chats").
+		PlaceholderFormat(sq.Dollar).
+		Columns("title").
+		Values(in.GetTitle()).
+		Suffix("RETURNING id")
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var chatId int64
+	err = s.db.QueryRow(ctx, query, args...).Scan(&chatId)
+	if err != nil {
+		return nil, err
+	}
+
+	builder = sq.Insert("users_chats").
+		PlaceholderFormat(sq.Dollar).
+		Columns("chat_id", "user_tag")
+
+	for _, v := range in.GetUsersTags() {
+		builder = builder.Values(chatId, v)
+	}
+
+	query, args, err = builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.db.Exec(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &desc.CreateChatResponse{ChatId: chatId}, nil
+}
+
+// AddUserToChat добавляет пользователей в уже созданный чат
+func (s *server) AddUserToChat(ctx context.Context, in *desc.AddUsersToChatRequest) (*emptypb.Empty, error) {
+	builder := sq.Insert("users_chats").
+		PlaceholderFormat(sq.Dollar).
+		Columns("chat_id", "user_tag")
+	for _, v := range in.GetUsersTag() {
+		builder = builder.Values(in.GetChatId(), v)
+	}
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.db.Exec(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+// DeleteChat удаляет чат
+func (s *server) DeleteChat(ctx context.Context, in *desc.DeleteChatRequest) (*emptypb.Empty, error) {
+	builder := sq.Delete("chat").
+		Where(sq.Eq{"id": in.GetChatId()})
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.db.QueryRow(ctx, query, args...).Scan(&emptypb.Empty{})
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, nil
+}
+
+// SendMessage отправляет сообщение в чат
+func (s *server) SendMessage(ctx context.Context, in *desc.SendMessageRequest) (*emptypb.Empty, error) {
+	builder := sq.Insert("messages").
+		PlaceholderFormat(sq.Dollar).
+		Columns("chat_id", "user_tag", "message").
+		Values(in.GetChatId(), in.GetUserTag(), in.GetText())
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.db.Exec(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, nil
+}
