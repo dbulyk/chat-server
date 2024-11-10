@@ -34,7 +34,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
-	defer pool.Close(ctx)
+
+	defer func(pool *pgx.Conn, ctx context.Context) {
+		err = pool.Close(ctx)
+		if err != nil {
+			log.Fatalf("failed to close connection: %v", err)
+		}
+	}(pool, ctx)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
 	if err != nil {
@@ -65,8 +71,8 @@ func (s *server) CreateChat(ctx context.Context, in *desc.CreateChatRequest) (*d
 		return nil, err
 	}
 
-	var chatId int64
-	err = s.db.QueryRow(ctx, query, args...).Scan(&chatId)
+	var chatID int64
+	err = s.db.QueryRow(ctx, query, args...).Scan(&chatID)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +82,7 @@ func (s *server) CreateChat(ctx context.Context, in *desc.CreateChatRequest) (*d
 		Columns("chat_id", "user_tag")
 
 	for _, v := range in.GetUsersTags() {
-		builder = builder.Values(chatId, v)
+		builder = builder.Values(chatID, v)
 	}
 
 	query, args, err = builder.ToSql()
@@ -88,7 +94,7 @@ func (s *server) CreateChat(ctx context.Context, in *desc.CreateChatRequest) (*d
 		return nil, err
 	}
 
-	return &desc.CreateChatResponse{ChatId: chatId}, nil
+	return &desc.CreateChatResponse{ChatId: chatID}, nil
 }
 
 // AddUserToChat добавляет пользователей в уже созданный чат
