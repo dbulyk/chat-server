@@ -4,10 +4,11 @@ import (
 	desc "chat_server/pkg/chat_server_v1"
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"log"
 	"net"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 
 	sq "github.com/Masterminds/squirrel"
 	"google.golang.org/grpc"
