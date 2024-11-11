@@ -31,7 +31,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	pool, err := pgx.Connect(ctx, dbDSN)
+	conn, err := pgx.Connect(ctx, dbDSN)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
@@ -41,7 +41,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to close connection: %v", err)
 		}
-	}(pool, ctx)
+	}(conn, ctx)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
 	if err != nil {
@@ -50,7 +50,7 @@ func main() {
 
 	s := grpc.NewServer()
 	reflection.Register(s)
-	desc.RegisterChatServerV1Server(s, &server{db: pool})
+	desc.RegisterChatServerV1Server(s, &server{db: conn})
 
 	log.Printf("server listening at %v", lis.Addr())
 
@@ -129,7 +129,7 @@ func (s *server) DeleteChat(ctx context.Context, in *desc.DeleteChatRequest) (*e
 		return nil, err
 	}
 
-	err = s.db.QueryRow(ctx, query, args...).Scan(&emptypb.Empty{})
+	_, err = s.db.Exec(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
