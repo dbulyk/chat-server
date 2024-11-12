@@ -1,10 +1,11 @@
 package env
 
 import (
-	"chat_server/internal/config"
 	"errors"
 	"net"
 	"os"
+
+	"chat_server/internal/config"
 )
 
 var _ config.GRPCConfig = (*grpcConfig)(nil)

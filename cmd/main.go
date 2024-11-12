@@ -1,21 +1,21 @@
 package main
 
 import (
-	"chat_server/internal/config"
-	"chat_server/internal/config/env"
-	desc "chat_server/pkg/chat_server_v1"
 	"context"
 	"flag"
 	"log"
 	"net"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	"chat_server/internal/config"
+	"chat_server/internal/config/env"
+	desc "chat_server/pkg/chat_server_v1"
 )
 
 var configPath string

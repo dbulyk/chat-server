@@ -1,9 +1,10 @@
 package env
 
 import (
-	"chat_server/internal/config"
 	"errors"
 	"os"
+
+	"chat_server/internal/config"
 )
 
 var _ config.PGConfig = (*pgConfig)(nil)
