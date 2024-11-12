@@ -19,6 +19,7 @@ type grpcConfig struct {
 	port string
 }
 
+// NewGRPCConfig инициализирует и возвращает конфиг для поднятия сервера
 func NewGRPCConfig() (*grpcConfig, error) {
 	host := os.Getenv(grpcHostEnvName)
 	if len(host) == 0 {
@@ -36,6 +37,7 @@ func NewGRPCConfig() (*grpcConfig, error) {
 	}, nil
 }
 
+// Address склеивает хост и порт сервера
 func (cfg *grpcConfig) Address() string {
 	return net.JoinHostPort(cfg.host, cfg.port)
 }
