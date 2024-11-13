@@ -143,7 +143,8 @@ func (s *server) AddUserToChat(ctx context.Context, in *desc.AddUsersToChatReque
 // DeleteChat удаляет чат
 func (s *server) DeleteChat(ctx context.Context, in *desc.DeleteChatRequest) (*emptypb.Empty, error) {
 	builder := sq.Delete("chat").
-		Where(sq.Eq{"id": in.GetChatId()})
+		Where(sq.Eq{"id": in.GetChatId()}).
+		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
 	if err != nil {
