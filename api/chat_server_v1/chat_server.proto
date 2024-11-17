@@ -13,6 +13,12 @@ service ChatServerV1 {
   rpc SendMessage(SendMessageRequest) returns (google.protobuf.Empty);
 }
 
+message Message {
+  string userTag = 1;
+  int64 chatId = 2;
+  string text = 3;
+}
+
 message CreateChatRequest {
   string title = 1; // название чата
   repeated string usersTags = 2; // тэги пользователей
@@ -32,7 +38,5 @@ message DeleteChatRequest {
 }
 
 message SendMessageRequest {
-  string userTag = 1;
-  int64 chatId = 2;
-  string text = 3;
+  Message Message = 1;
 }
