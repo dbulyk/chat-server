@@ -14,8 +14,10 @@ import (
 
 	"chat_server/internal/config"
 	"chat_server/internal/config/env"
+	"chat_server/internal/model"
 	"chat_server/internal/repository/chat"
-	"chat_server/internal/repository/chat/model"
+	"chat_server/internal/service"
+	serv "chat_server/internal/service/chat"
 	desc "chat_server/pkg/chat_server_v1"
 )
 
@@ -23,7 +25,7 @@ var configPath string
 
 type server struct {
 	desc.UnimplementedChatServerV1Server
-	repo *chat.Repo
+	service service.ChatService
 }
 
 // init записывает параметр конфига
@@ -65,9 +67,10 @@ func main() {
 	defer pool.Close()
 
 	chatRepo := chat.NewRepository(pool)
+	chatService := serv.NewChatService(chatRepo)
 	s := grpc.NewServer()
 	reflection.Register(s)
-	desc.RegisterChatServerV1Server(s, &server{repo: chatRepo})
+	desc.RegisterChatServerV1Server(s, &server{service: chatService})
 
 	log.Printf("server listening at %v", lis.Addr())
 
@@ -79,7 +82,7 @@ func main() {
 // CreateChat Создаёт новый чат с указанным названием
 func (s *server) CreateChat(ctx context.Context, in *desc.CreateChatRequest) (*desc.CreateChatResponse, error) {
 	createChatModel := model.CreateChat{Title: in.GetTitle()}
-	chatID, err := s.repo.CreateChat(ctx, createChatModel)
+	chatID, err := s.service.CreateChatServ(ctx, &createChatModel)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +92,7 @@ func (s *server) CreateChat(ctx context.Context, in *desc.CreateChatRequest) (*d
 
 // AddMembersToChat добавляет пользователей в уже созданный чат
 func (s *server) AddMembersToChat(ctx context.Context, in *desc.AddUsersToChatRequest) (*emptypb.Empty, error) {
-	err := s.repo.AddMembersToChat(ctx, in.GetChatId(), in.GetUsersTag())
+	err := s.service.AddMembersServ(ctx, in.GetChatId(), in.GetUsersTag())
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +102,7 @@ func (s *server) AddMembersToChat(ctx context.Context, in *desc.AddUsersToChatRe
 
 // DeleteChat удаляет чат
 func (s *server) DeleteChat(ctx context.Context, in *desc.DeleteChatRequest) (*emptypb.Empty, error) {
-	err := s.repo.DeleteChat(ctx, in.GetChatId())
+	err := s.service.DeleteChatServ(ctx, in.GetChatId())
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +111,7 @@ func (s *server) DeleteChat(ctx context.Context, in *desc.DeleteChatRequest) (*e
 
 // SendMessage отправляет сообщение в чат
 func (s *server) SendMessage(ctx context.Context, in *desc.SendMessageRequest) (*emptypb.Empty, error) {
-	msg := model.Message{
-		ChatID:    in.GetChatId(),
-		Text:      in.GetText(),
-		MemberTag: in.GetUserTag(),
-	}
-	err := s.repo.SendMessage(ctx, msg)
+	err := s.service.SendMessageServ(ctx, in.GetMessage())
 	if err != nil {
 		return nil, err
 	}

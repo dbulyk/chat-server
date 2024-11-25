@@ -6,8 +6,8 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"chat_server/internal/model"
 	"chat_server/internal/repository"
-	"chat_server/internal/repository/chat/model"
 )
 
 var _ repository.Chat = (*repoChat)(nil)
@@ -25,11 +25,11 @@ type repoChat struct {
 }
 
 // CreateChat создаёт чат с заданным названием
-func (r *repoChat) CreateChat(ctx context.Context, chat model.CreateChat) (int64, error) {
+func (r *repoChat) CreateChat(ctx context.Context, chatInfo *model.CreateChat) (int64, error) {
 	builder := sq.Insert(tableName).
 		PlaceholderFormat(sq.Dollar).
 		Columns(titleColumn).
-		Values(chat.Title).
+		Values(chatInfo.Title).
 		Suffix("RETURNING " + idColumn)
 
 	query, args, err := builder.ToSql()

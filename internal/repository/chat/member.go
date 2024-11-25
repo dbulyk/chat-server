@@ -1,10 +1,12 @@
 package chat
 
 import (
-	"chat_server/internal/repository"
 	"context"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"chat_server/internal/repository"
 )
 
 var _ repository.Member = (*repoMember)(nil)
@@ -13,8 +15,8 @@ type repoMember struct {
 	db *pgxpool.Pool
 }
 
-// AddMembersToChat добавляет пользователя(ей) в чат
-func (r *repoMember) AddMembersToChat(ctx context.Context, chatID int64, memberTags []string) error {
+// AddMembers добавляет пользователя(ей) в чат
+func (r *repoMember) AddMembers(ctx context.Context, chatID int64, memberTags []string) error {
 	builder := sq.Insert("users_chats").
 		PlaceholderFormat(sq.Dollar).
 		Columns("chat_id", "user_tag")
@@ -33,8 +35,8 @@ func (r *repoMember) AddMembersToChat(ctx context.Context, chatID int64, memberT
 	return nil
 }
 
-// RemoveMembersFromChat удаляет пользователя(ей) из чата
-func (r *repoMember) RemoveMembersFromChat(ctx context.Context, chatID int64, memberTags []string) error {
+// RemoveMembers удаляет пользователя(ей) из чата
+func (r *repoMember) RemoveMembers(ctx context.Context, chatID int64, memberTags []string) error {
 	builder := sq.Delete("users_chats").
 		PlaceholderFormat(sq.Dollar).
 		Where(sq.And{
