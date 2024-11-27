@@ -10,23 +10,16 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/protobuf/types/known/emptypb"
 
+	chatAPI "chat_server/internal/api/chat"
 	"chat_server/internal/config"
 	"chat_server/internal/config/env"
-	"chat_server/internal/model"
 	"chat_server/internal/repository/chat"
-	"chat_server/internal/service"
 	serv "chat_server/internal/service/chat"
 	desc "chat_server/pkg/chat_server_v1"
 )
 
 var configPath string
-
-type server struct {
-	desc.UnimplementedChatServerV1Server
-	service service.ChatService
-}
 
 // init записывает параметр конфига
 func init() {
@@ -70,50 +63,11 @@ func main() {
 	chatService := serv.NewChatService(chatRepo)
 	s := grpc.NewServer()
 	reflection.Register(s)
-	desc.RegisterChatServerV1Server(s, &server{service: chatService})
+	desc.RegisterChatServerV1Server(s, chatAPI.NewImplementation(chatService))
 
 	log.Printf("server listening at %v", lis.Addr())
 
 	if err = s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-}
-
-// CreateChat Создаёт новый чат с указанным названием
-func (s *server) CreateChat(ctx context.Context, in *desc.CreateChatRequest) (*desc.CreateChatResponse, error) {
-	createChatModel := model.CreateChat{Title: in.GetTitle()}
-	chatID, err := s.service.CreateChatServ(ctx, &createChatModel)
-	if err != nil {
-		return nil, err
-	}
-
-	return &desc.CreateChatResponse{ChatId: chatID}, nil
-}
-
-// AddMembersToChat добавляет пользователей в уже созданный чат
-func (s *server) AddMembersToChat(ctx context.Context, in *desc.AddUsersToChatRequest) (*emptypb.Empty, error) {
-	err := s.service.AddMembersServ(ctx, in.GetChatId(), in.GetUsersTag())
-	if err != nil {
-		return nil, err
-	}
-
-	return &emptypb.Empty{}, nil
-}
-
-// DeleteChat удаляет чат
-func (s *server) DeleteChat(ctx context.Context, in *desc.DeleteChatRequest) (*emptypb.Empty, error) {
-	err := s.service.DeleteChatServ(ctx, in.GetChatId())
-	if err != nil {
-		return nil, err
-	}
-	return &emptypb.Empty{}, nil
-}
-
-// SendMessage отправляет сообщение в чат
-func (s *server) SendMessage(ctx context.Context, in *desc.SendMessageRequest) (*emptypb.Empty, error) {
-	err := s.service.SendMessageServ(ctx, in.GetMessage())
-	if err != nil {
-		return nil, err
-	}
-	return &emptypb.Empty{}, nil
 }

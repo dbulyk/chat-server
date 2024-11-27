@@ -11,7 +11,7 @@ type serv struct {
 	chatServerRepository repository.ChatServerRepository
 }
 
-// NewChatService создаёт новый объект сервиса
+// NewChatService создаёт новый объект сервиса чатов
 func NewChatService(chatServerRepository repository.ChatServerRepository) *serv {
 	return &serv{chatServerRepository: chatServerRepository}
 }
