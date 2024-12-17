@@ -4,15 +4,15 @@ import (
 	"context"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5/pgxpool"
 
+	"chat_server/internal/client/db"
 	"chat_server/internal/repository"
 )
 
 var _ repository.Member = (*repoMember)(nil)
 
 type repoMember struct {
-	db *pgxpool.Pool
+	db db.Client
 }
 
 // AddMembers добавляет пользователя(ей) в чат
@@ -28,7 +28,13 @@ func (r *repoMember) AddMembers(ctx context.Context, chatID int64, memberTags []
 	if err != nil {
 		return err
 	}
-	_, err = r.db.Exec(ctx, query, args...)
+
+	q := db.Query{
+		Name:     "chat_repository.AddMembers",
+		QueryRaw: query,
+	}
+
+	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return err
 	}
@@ -49,7 +55,12 @@ func (r *repoMember) RemoveMembers(ctx context.Context, chatID int64, memberTags
 		return err
 	}
 
-	_, err = r.db.Exec(ctx, query, args...)
+	q := db.Query{
+		Name:     "chat_repository.AddMembers",
+		QueryRaw: query,
+	}
+
+	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return err
 	}

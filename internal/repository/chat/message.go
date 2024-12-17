@@ -4,8 +4,8 @@ import (
 	"context"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5/pgxpool"
 
+	"chat_server/internal/client/db"
 	"chat_server/internal/model"
 	"chat_server/internal/repository"
 )
@@ -13,7 +13,7 @@ import (
 var _ repository.Message = (*repoMessage)(nil)
 
 type repoMessage struct {
-	db *pgxpool.Pool
+	db db.Client
 }
 
 // SendMessage отправляет сообщение в чат
@@ -28,7 +28,12 @@ func (r *repoMessage) SendMessage(ctx context.Context, msg *model.Message) error
 		return err
 	}
 
-	_, err = r.db.Exec(ctx, query, args...)
+	q := db.Query{
+		Name:     "chat_repository.SendMessage",
+		QueryRaw: query,
+	}
+
+	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return err
 	}

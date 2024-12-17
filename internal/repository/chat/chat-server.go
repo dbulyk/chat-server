@@ -1,8 +1,7 @@
 package chat
 
 import (
-	"github.com/jackc/pgx/v5/pgxpool"
-
+	"chat_server/internal/client/db"
 	"chat_server/internal/repository"
 )
 
@@ -16,7 +15,7 @@ type Repo struct {
 }
 
 // NewRepository возвращает репозиторий с имплементациями основных функций приложения
-func NewRepository(db *pgxpool.Pool) *Repo {
+func NewRepository(db db.Client) *Repo {
 	return &Repo{
 		repoChat:    repoChat{db: db},
 		repoMember:  repoMember{db: db},

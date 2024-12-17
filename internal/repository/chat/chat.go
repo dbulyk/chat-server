@@ -4,8 +4,8 @@ import (
 	"context"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5/pgxpool"
 
+	"chat_server/internal/client/db"
 	"chat_server/internal/model"
 	"chat_server/internal/repository"
 )
@@ -21,7 +21,7 @@ const (
 )
 
 type repoChat struct {
-	db *pgxpool.Pool
+	db db.Client
 }
 
 // CreateChat создаёт чат с заданным названием
@@ -37,8 +37,13 @@ func (r *repoChat) CreateChat(ctx context.Context, chatInfo *model.CreateChat) (
 		return -1, err
 	}
 
+	q := db.Query{
+		Name:     "chat_repository.CreateChat",
+		QueryRaw: query,
+	}
+
 	var chatID int64
-	err = r.db.QueryRow(ctx, query, args...).Scan(&chatID)
+	err = r.db.DB().QueryRowContext(ctx, q, args...).Scan(&chatID)
 	if err != nil {
 		return -1, err
 	}
@@ -57,7 +62,12 @@ func (r *repoChat) DeleteChat(ctx context.Context, chatID int64) error {
 		return err
 	}
 
-	_, err = r.db.Exec(ctx, query, args...)
+	q := db.Query{
+		Name:     "chat_repository.DeleteChat",
+		QueryRaw: query,
+	}
+
+	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return err
 	}
