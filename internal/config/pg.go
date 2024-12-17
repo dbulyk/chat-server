@@ -1,13 +1,11 @@
-package env
+package config
 
 import (
 	"errors"
 	"os"
-
-	"chat_server/internal/config"
 )
 
-var _ config.PGConfig = (*pgConfig)(nil)
+var _ PGConfig = (*pgConfig)(nil)
 
 const (
 	dsnEnvName = "PG_DSN"
