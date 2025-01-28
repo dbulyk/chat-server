@@ -25,12 +25,10 @@ type server struct {
 	db *pgx.Conn
 }
 
-// init записывает параметр конфига
 func init() {
 	flag.StringVar(&configPath, "config-path", ".env", "path to config file")
 }
 
-// main запускает сервер на указанном в конфиге порту
 func main() {
 	flag.Parse()
 
@@ -142,11 +140,23 @@ func (s *server) AddUserToChat(ctx context.Context, in *desc.AddUsersToChatReque
 
 // DeleteChat удаляет чат
 func (s *server) DeleteChat(ctx context.Context, in *desc.DeleteChatRequest) (*emptypb.Empty, error) {
-	builder := sq.Delete("chat").
+	builder := sq.Delete("users_chats").
+		PlaceholderFormat(sq.Dollar).
+		Where(sq.Eq{"chat_id": in.GetChatId()})
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.db.Exec(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	builder = sq.Delete("chats").
 		Where(sq.Eq{"id": in.GetChatId()}).
 		PlaceholderFormat(sq.Dollar)
 
-	query, args, err := builder.ToSql()
+	query, args, err = builder.ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -158,8 +168,8 @@ func (s *server) DeleteChat(ctx context.Context, in *desc.DeleteChatRequest) (*e
 	return &emptypb.Empty{}, nil
 }
 
-// SendMessage отправляет сообщение в чат
-func (s *server) SendMessage(ctx context.Context, in *desc.SendMessageRequest) (*emptypb.Empty, error) {
+// SendMessageToChat отправляет сообщение в чат
+func (s *server) SendMessageToChat(ctx context.Context, in *desc.SendMessageRequest) (*emptypb.Empty, error) {
 	builder := sq.Insert("messages").
 		PlaceholderFormat(sq.Dollar).
 		Columns("chat_id", "user_tag", "message").
