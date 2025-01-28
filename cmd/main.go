@@ -1,6 +1,9 @@
 package main
 
 import (
+	"chat_server/internal/repository"
+	"chat_server/internal/service"
+	chatService "chat_server/internal/service/chat"
 	"context"
 	"flag"
 	"log"
@@ -22,7 +25,7 @@ var configPath string
 
 type server struct {
 	desc.UnimplementedChatServerV1Server
-	db *pgx.Conn
+	serv service.ChatService
 }
 
 func init() {
@@ -67,9 +70,12 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	chatRepo := repository.NewRepository(conn)
+	service := chatService.NewChatService(chatRepo)
+
 	s := grpc.NewServer()
 	reflection.Register(s)
-	desc.RegisterChatServerV1Server(s, &server{db: conn})
+	desc.RegisterChatServerV1Server(s, &server{serv: service})
 
 	log.Printf("server listening at %v", lis.Addr())
 

@@ -1,7 +1,8 @@
 package chat
 
 import (
-	"chat_server/internal/repository/chat/model"
+	"chat_server/internal/model"
+	"chat_server/internal/repository"
 	"context"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -24,11 +25,11 @@ type repo struct {
 	db *pgxpool.Pool
 }
 
-//func NewRepository(db *pgxpool.Pool) *repository.ChatRepository {
-//	return &repo{db: db}
-//}
+func NewRepository(db *pgxpool.Pool) *repository.ChatRepository {
+	return &repo{db: db}
+}
 
-func (r *repo) CreateChat(ctx context.Context, in *model.CreateChatRequest) (*model.CreateChatResponse, error) {
+func (r *repo) CreateChat(ctx context.Context, in *model.CreateChatRequest) (int64, error) {
 	builder := sq.Insert(chatTableName).
 		PlaceholderFormat(sq.Dollar).
 		Columns(titleColumn).
@@ -37,13 +38,13 @@ func (r *repo) CreateChat(ctx context.Context, in *model.CreateChatRequest) (*mo
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	var chatID int64
 	err = r.db.QueryRow(ctx, query, args...).Scan(&chatID)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	builder = sq.Insert(chatUsersTableName).
@@ -56,14 +57,14 @@ func (r *repo) CreateChat(ctx context.Context, in *model.CreateChatRequest) (*mo
 
 	query, args, err = builder.ToSql()
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	_, err = r.db.Exec(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return &model.CreateChatResponse{ChatId: chatID}, nil
+	return chatID, nil
 }
 
 func (r *repo) AddUserToChat(ctx context.Context, in *model.AddUserToChatRequest) (*emptypb.Empty, error) {
@@ -86,10 +87,10 @@ func (r *repo) AddUserToChat(ctx context.Context, in *model.AddUserToChatRequest
 	return &emptypb.Empty{}, nil
 }
 
-func (r *repo) DeleteChat(ctx context.Context, in *model.DeleteChatRequest) (*emptypb.Empty, error) {
+func (r *repo) DeleteChat(ctx context.Context, chatId int64) (*emptypb.Empty, error) {
 	builder := sq.Delete(chatUsersTableName).
 		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{chatIdColumn: in.ChatId})
+		Where(sq.Eq{chatIdColumn: chatId})
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
@@ -100,7 +101,7 @@ func (r *repo) DeleteChat(ctx context.Context, in *model.DeleteChatRequest) (*em
 	}
 
 	builder = sq.Delete(chatTableName).
-		Where(sq.Eq{"id": in.ChatId}).
+		Where(sq.Eq{idColumn: chatId}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err = builder.ToSql()
