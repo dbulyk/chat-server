@@ -1,14 +1,15 @@
 package service
 
 import (
-	"chat_server/internal/model"
 	"context"
-	"google.golang.org/protobuf/types/known/emptypb"
+
+	"chat_server/internal/model"
 )
 
+// ChatService описывает контракт для сервиса чатов
 type ChatService interface {
-	CreateChat(ctx context.Context, in *model.CreateChatRequest) (*model.CreateChatResponse, error)
-	AddUserToChat(ctx context.Context, in *model.AddUserToChatRequest) (*emptypb.Empty, error)
-	DeleteChat(ctx context.Context, in *model.DeleteChatRequest) (*emptypb.Empty, error)
-	SendMessageToChat(ctx context.Context, in *model.SendMessageToChatRequest) (*emptypb.Empty, error)
+	Create(ctx context.Context, in *model.CreateChatRequest) (int64, error)
+	AddUser(ctx context.Context, in *model.AddUserToChatRequest) error
+	Delete(ctx context.Context, chatID int64) error
+	SendMessage(ctx context.Context, in *model.SendMessageToChatRequest) error
 }

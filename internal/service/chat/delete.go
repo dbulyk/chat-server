@@ -1,15 +1,14 @@
 package chat
 
 import (
-	"chat_server/internal/model"
 	"context"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (s *Service) DeleteChat(ctx context.Context, in *model.DeleteChatRequest) (*emptypb.Empty, error) {
-	_, err := s.chatRepository.DeleteChat(ctx, in.ChatId)
+// Delete является сервисной прослойкой для удаления чата
+func (s *service) Delete(ctx context.Context, chatID int64) error {
+	err := s.chatRepository.DeleteChat(ctx, chatID)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &emptypb.Empty{}, nil
+	return nil
 }

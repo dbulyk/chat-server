@@ -1,11 +1,15 @@
 package chat
 
-import "chat_server/internal/repository"
+import (
+	"chat_server/internal/repository"
+	serv "chat_server/internal/service"
+)
 
-type Service struct {
+type service struct {
 	chatRepository repository.ChatRepository
 }
 
-func NewChatService(chatRepository repository.ChatRepository) *Service {
-	return &Service{chatRepository: chatRepository}
+// NewChatService возвращает объект сервиса чатов
+func NewChatService(chatRepository repository.ChatRepository) serv.ChatService {
+	return &service{chatRepository: chatRepository}
 }

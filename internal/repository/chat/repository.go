@@ -1,22 +1,23 @@
 package chat
 
 import (
-	"chat_server/internal/model"
-	"chat_server/internal/repository"
 	"context"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"google.golang.org/protobuf/types/known/emptypb"
+
+	"chat_server/internal/model"
+	"chat_server/internal/repository"
 )
 
 const (
 	chatTableName      = "chats"
-	chatUsersTableName = "chat_users"
+	chatUsersTableName = "users_chats"
 	messagesTableName  = "messages"
 
 	idColumn      = "id"
 	titleColumn   = "title"
-	chatIdColumn  = "chat_id"
+	chatIDColumn  = "chat_id"
 	userTagColumn = "user_tag"
 	messageColumn = "message"
 )
@@ -25,7 +26,8 @@ type repo struct {
 	db *pgxpool.Pool
 }
 
-func NewRepository(db *pgxpool.Pool) *repository.ChatRepository {
+// NewRepository возвращает объект репозитория чатов
+func NewRepository(db *pgxpool.Pool) repository.ChatRepository {
 	return &repo{db: db}
 }
 
@@ -49,7 +51,7 @@ func (r *repo) CreateChat(ctx context.Context, in *model.CreateChatRequest) (int
 
 	builder = sq.Insert(chatUsersTableName).
 		PlaceholderFormat(sq.Dollar).
-		Columns(chatIdColumn, userTagColumn)
+		Columns(chatIDColumn, userTagColumn)
 
 	for _, v := range in.UserTags {
 		builder = builder.Values(chatID, v)
@@ -67,69 +69,69 @@ func (r *repo) CreateChat(ctx context.Context, in *model.CreateChatRequest) (int
 	return chatID, nil
 }
 
-func (r *repo) AddUserToChat(ctx context.Context, in *model.AddUserToChatRequest) (*emptypb.Empty, error) {
+func (r *repo) AddUserToChat(ctx context.Context, in *model.AddUserToChatRequest) error {
 	builder := sq.Insert(chatUsersTableName).
 		PlaceholderFormat(sq.Dollar).
-		Columns(chatIdColumn, userTagColumn)
+		Columns(chatIDColumn, userTagColumn)
 	for _, v := range in.UserTags {
-		builder = builder.Values(in.ChatId, v)
+		builder = builder.Values(in.ChatID, v)
 	}
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	_, err = r.db.Exec(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &emptypb.Empty{}, nil
+	return nil
 }
 
-func (r *repo) DeleteChat(ctx context.Context, chatId int64) (*emptypb.Empty, error) {
+func (r *repo) DeleteChat(ctx context.Context, chatID int64) error {
 	builder := sq.Delete(chatUsersTableName).
 		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{chatIdColumn: chatId})
+		Where(sq.Eq{chatIDColumn: chatID})
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	_, err = r.db.Exec(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	builder = sq.Delete(chatTableName).
-		Where(sq.Eq{idColumn: chatId}).
+		Where(sq.Eq{idColumn: chatID}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err = builder.ToSql()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	_, err = r.db.Exec(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &emptypb.Empty{}, nil
+	return nil
 }
 
-func (r *repo) SendMessageToChat(ctx context.Context, in *model.SendMessageToChatRequest) (*emptypb.Empty, error) {
+func (r *repo) SendMessageToChat(ctx context.Context, in *model.SendMessageToChatRequest) error {
 	builder := sq.Insert(messagesTableName).
 		PlaceholderFormat(sq.Dollar).
-		Columns(chatIdColumn, userTagColumn, messageColumn).
-		Values(in.ChatId, in.UserTag, in.Message)
+		Columns(chatIDColumn, userTagColumn, messageColumn).
+		Values(in.ChatID, in.UserTag, in.Message)
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	_, err = r.db.Exec(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &emptypb.Empty{}, nil
+	return nil
 }

@@ -1,15 +1,16 @@
 package chat
 
 import (
-	"chat_server/internal/model"
 	"context"
-	"google.golang.org/protobuf/types/known/emptypb"
+
+	"chat_server/internal/model"
 )
 
-func (s *Service) AddUserToChat(ctx context.Context, in *model.AddUserToChatRequest) (*emptypb.Empty, error) {
-	_, err := s.chatRepository.AddUserToChat(ctx, in)
+// AddUser является сервисной прослойкой для добавления пользователя в чат
+func (s *service) AddUser(ctx context.Context, in *model.AddUserToChatRequest) error {
+	err := s.chatRepository.AddUserToChat(ctx, in)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &emptypb.Empty{}, nil
+	return nil
 }

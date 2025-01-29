@@ -1,15 +1,16 @@
 package chat
 
 import (
-	"chat_server/internal/model"
 	"context"
-	"google.golang.org/protobuf/types/known/emptypb"
+
+	"chat_server/internal/model"
 )
 
-func (s *Service) SendMessageToChat(ctx context.Context, in *model.SendMessageToChatRequest) (*emptypb.Empty, error) {
-	_, err := s.chatRepository.SendMessageToChat(ctx, in)
+// SendMessage является сервисной прослойкой для отправки сообщения в чат
+func (s *service) SendMessage(ctx context.Context, in *model.SendMessageToChatRequest) error {
+	err := s.chatRepository.SendMessageToChat(ctx, in)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &emptypb.Empty{}, nil
+	return nil
 }

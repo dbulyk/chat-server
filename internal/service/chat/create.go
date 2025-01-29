@@ -1,14 +1,16 @@
 package chat
 
 import (
-	"chat_server/internal/model"
 	"context"
+
+	"chat_server/internal/model"
 )
 
-func (s *Service) CreateChat(ctx context.Context, in *model.CreateChatRequest) (*model.CreateChatResponse, error) {
+// Create является сервисной прослойкой для создания чата
+func (s *service) Create(ctx context.Context, in *model.CreateChatRequest) (int64, error) {
 	chatID, err := s.chatRepository.CreateChat(ctx, in)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	return &model.CreateChatResponse{ChatId: chatID}, nil
+	return chatID, nil
 }
