@@ -7,6 +7,7 @@ import (
 	"chat_server/internal/api/chat"
 	"chat_server/internal/client/db"
 	"chat_server/internal/client/db/pg"
+	"chat_server/internal/client/db/trancsation"
 	"chat_server/internal/closer"
 	"chat_server/internal/config"
 	"chat_server/internal/config/env"
@@ -20,6 +21,7 @@ type serviceProvider struct {
 	grpcConfig config.GRPCConfig
 	pgConfig   config.PGConfig
 	dbc        db.Client
+	txManager  db.TxManager
 
 	chatRepository repository.ChatRepository
 	chatService    service.ChatService
@@ -53,7 +55,7 @@ func (sp *serviceProvider) PGConfig() config.PGConfig {
 	return sp.pgConfig
 }
 
-func (sp *serviceProvider) PGPool(ctx context.Context) db.Client {
+func (sp *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if sp.dbc == nil {
 		conn, err := pg.New(ctx, sp.PGConfig().DSN())
 		if err != nil {
@@ -78,9 +80,17 @@ func (sp *serviceProvider) PGPool(ctx context.Context) db.Client {
 	return sp.dbc
 }
 
+func (sp *serviceProvider) TxManager(ctx context.Context) db.TxManager {
+	if sp.txManager == nil {
+		sp.txManager = trancsation.NewTransactionManager(sp.DBClient(ctx).DB())
+	}
+
+	return sp.txManager
+}
+
 func (sp *serviceProvider) ChatRepository(ctx context.Context) repository.ChatRepository {
 	if sp.chatRepository == nil {
-		chatRepo := repo.NewRepository(sp.PGPool(ctx))
+		chatRepo := repo.NewRepository(sp.DBClient(ctx))
 		sp.chatRepository = chatRepo
 	}
 	return sp.chatRepository
@@ -88,7 +98,7 @@ func (sp *serviceProvider) ChatRepository(ctx context.Context) repository.ChatRe
 
 func (sp *serviceProvider) ChatService(ctx context.Context) service.ChatService {
 	if sp.chatService == nil {
-		serv := chatService.NewChatService(sp.ChatRepository(ctx))
+		serv := chatService.NewChatService(sp.ChatRepository(ctx), sp.TxManager(ctx))
 		sp.chatService = serv
 	}
 	return sp.chatService

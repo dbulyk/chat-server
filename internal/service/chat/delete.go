@@ -6,7 +6,11 @@ import (
 
 // Delete является сервисной прослойкой для удаления чата
 func (s *service) Delete(ctx context.Context, chatID int64) error {
-	err := s.chatRepository.DeleteChat(ctx, chatID)
+	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
+		var txErr error
+		txErr = s.chatRepository.DeleteChat(ctx, chatID)
+		return txErr
+	})
 	if err != nil {
 		return err
 	}

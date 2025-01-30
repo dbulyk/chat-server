@@ -8,7 +8,11 @@ import (
 
 // AddUser является сервисной прослойкой для добавления пользователя в чат
 func (s *service) AddUser(ctx context.Context, in *model.AddUserToChatRequest) error {
-	err := s.chatRepository.AddUserToChat(ctx, in)
+	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
+		var errTx error
+		errTx = s.chatRepository.AddUserToChat(ctx, in)
+		return errTx
+	})
 	if err != nil {
 		return err
 	}
