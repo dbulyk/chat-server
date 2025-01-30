@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"chat_server/internal/api/chat"
+	"chat_server/internal/client/db"
+	"chat_server/internal/client/db/pg"
 	"chat_server/internal/closer"
 	"chat_server/internal/config"
 	"chat_server/internal/config/env"
@@ -19,7 +19,7 @@ import (
 type serviceProvider struct {
 	grpcConfig config.GRPCConfig
 	pgConfig   config.PGConfig
-	pgPool     *pgxpool.Pool
+	dbc        db.Client
 
 	chatRepository repository.ChatRepository
 	chatService    service.ChatService
@@ -53,26 +53,29 @@ func (sp *serviceProvider) PGConfig() config.PGConfig {
 	return sp.pgConfig
 }
 
-func (sp *serviceProvider) PGPool(ctx context.Context) *pgxpool.Pool {
-	if sp.pgPool == nil {
-		conn, err := pgxpool.New(ctx, sp.PGConfig().DSN())
+func (sp *serviceProvider) PGPool(ctx context.Context) db.Client {
+	if sp.dbc == nil {
+		conn, err := pg.New(ctx, sp.PGConfig().DSN())
 		if err != nil {
 			log.Fatalf("failed to connect to database: %v", err)
 		}
 
-		err = conn.Ping(ctx)
+		err = conn.DB().Ping(ctx)
 		if err != nil {
 			log.Fatalf("failed to ping database: %v", err)
 		}
 
 		closer.Add(func() error {
-			conn.Close()
+			err = conn.Close()
+			if err != nil {
+				return err
+			}
 			return nil
 		})
 
-		sp.pgPool = conn
+		sp.dbc = conn
 	}
-	return sp.pgPool
+	return sp.dbc
 }
 
 func (sp *serviceProvider) ChatRepository(ctx context.Context) repository.ChatRepository {
