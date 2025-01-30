@@ -15,7 +15,7 @@ service ChatServerV1 {
 
 message CreateChatRequest {
   string title = 1; // название чата
-  repeated string usersTags = 2; // тэги пользователей
+  repeated string usersTags = 2; // теги пользователей
 }
 
 message AddUsersToChatRequest {
