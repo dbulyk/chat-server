@@ -4,11 +4,12 @@ import (
 	"context"
 	"log"
 
+	"github.com/dbulyk/platform_common/pkg/closer"
+	"github.com/dbulyk/platform_common/pkg/db"
+	"github.com/dbulyk/platform_common/pkg/db/pg"
+	"github.com/dbulyk/platform_common/pkg/db/trancsation"
+
 	"chat_server/internal/api/chat"
-	"chat_server/internal/client/db"
-	"chat_server/internal/client/db/pg"
-	"chat_server/internal/client/db/trancsation"
-	"chat_server/internal/closer"
 	"chat_server/internal/config"
 	"chat_server/internal/config/env"
 	"chat_server/internal/repository"
