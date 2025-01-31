@@ -13,8 +13,5 @@ func (s *service) AddUser(ctx context.Context, in *model.AddUserToChatRequest) e
 		errTx = s.chatRepository.AddUserToChat(ctx, in)
 		return errTx
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

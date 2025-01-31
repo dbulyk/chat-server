@@ -13,8 +13,5 @@ func (s *service) SendMessage(ctx context.Context, in *model.SendMessageToChatRe
 		txErr = s.chatRepository.SendMessageToChat(ctx, in)
 		return txErr
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

@@ -11,8 +11,5 @@ func (s *service) Delete(ctx context.Context, chatID int64) error {
 		txErr = s.chatRepository.DeleteChat(ctx, chatID)
 		return txErr
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
