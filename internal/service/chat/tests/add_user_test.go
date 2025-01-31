@@ -1,19 +1,21 @@
 package tests
 
 import (
-	"chat_server/internal/client/db"
-	mocks2 "chat_server/internal/client/db/mocks"
+	"context"
+	"fmt"
+	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/dbulyk/platform_common/pkg/db"
+	mocks2 "github.com/dbulyk/platform_common/pkg/db/mocks"
+	"github.com/gojuno/minimock/v3"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	"chat_server/internal/model"
 	"chat_server/internal/repository"
 	"chat_server/internal/repository/mocks"
 	"chat_server/internal/service/chat"
-	"context"
-	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/gojuno/minimock/v3"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/emptypb"
-	"testing"
 )
 
 func TestAddUser(t *testing.T) {
