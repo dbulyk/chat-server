@@ -4,8 +4,8 @@ import (
 	"context"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/dbulyk/platform_common/pkg/db"
 
-	"chat_server/internal/client/db"
 	"chat_server/internal/model"
 	"chat_server/internal/repository"
 )

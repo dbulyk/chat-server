@@ -1,7 +1,8 @@
 package chat
 
 import (
-	"chat_server/internal/client/db"
+	"github.com/dbulyk/platform_common/pkg/db"
+
 	"chat_server/internal/repository"
 	serv "chat_server/internal/service"
 )

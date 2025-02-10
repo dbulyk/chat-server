@@ -5,10 +5,10 @@ import (
 	"log"
 	"net"
 
+	"github.com/dbulyk/platform_common/pkg/closer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	"chat_server/internal/closer"
 	"chat_server/internal/config"
 	desc "chat_server/pkg/chat_server_v1"
 )
